@@ -25,3 +25,38 @@ MUHIM:
 - .env faylini GitHubga yuklamang.
 - DEV_MODE productionda false bo‘lishi shart.
 - Render PORT qiymatini avtomatik beradi; PORTni qo‘lda kiritish shart emas.
+
+
+==============================
+TELEGRAM WEBHOOK SOZLAMASI
+==============================
+
+Loyiha polling emas, Telegram webhook bilan ishlaydi.
+
+Render RENDER_EXTERNAL_URL qiymatini avtomatik beradi, shu sabab APP_URL kiritish shart emas.
+Custom domen ishlatsangiz APP_URL=https://sizning-domen.uz kiriting. Oxirida / belgisi bo‘lmasin.
+WEBHOOK_SECRET render.yaml orqali avtomatik yaratiladi.
+
+Deploy tugagach server avtomatik ravishda quyidagi webhookni o‘rnatadi:
+
+https://SIZNING-SERVICE.onrender.com/telegram/webhook
+
+Tekshirish uchun brauzerda oching:
+
+https://SIZNING-SERVICE.onrender.com/telegram/webhook
+
+Natija:
+{"status":"webhook endpoint ready"}
+
+Botga /start yuboring. Mini Appni ochish inline tugmasi chiqadi.
+Qo‘shimcha komandalar:
+/start   - Mini Appni ochish
+/balance - UC balansni ko‘rish
+/help    - yordam
+/admin   - faqat admin uchun admin panel
+
+Agar webhook ishlamasa Render Logs ichida quyidagilarni tekshiring:
+- APP_URL to‘g‘ri va HTTPS bo‘lishi
+- BOT_TOKEN to‘g‘ri bo‘lishi
+- WEBHOOK_SECRET mavjud bo‘lishi
+- Telegram webhook faol degan log chiqishi

@@ -36,6 +36,10 @@ const CONFIG = Object.freeze({
   devMode: String(process.env.DEV_MODE || 'false').toLowerCase() === 'true',
   devTelegramId: String(process.env.DEV_TELEGRAM_ID || '8231044589'),
   mandatoryCacheSeconds: Number(process.env.MANDATORY_CACHE_SECONDS || 300),
+  appUrl: String(
+    process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || process.env.WEBHOOK_BASE_URL || ''
+  ).trim().replace(/\/+$/, ''),
+  webhookSecret: String(process.env.WEBHOOK_SECRET || process.env.REFERRAL_SALT || '').trim(),
 });
 
 const cloudinaryEnabled = Boolean(
@@ -542,6 +546,187 @@ function adminChatLink(text) {
   if (!CONFIG.adminUsername) return '';
   return `https://t.me/${CONFIG.adminUsername}?text=${encodeURIComponent(text)}`;
 }
+
+function telegramWebhookSecretToken() {
+  if (!CONFIG.webhookSecret) return '';
+  return crypto.createHash('sha256').update(CONFIG.webhookSecret).digest('hex');
+}
+
+function secureEqualText(left, right) {
+  const a = Buffer.from(String(left || ''));
+  const b = Buffer.from(String(right || ''));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function miniAppUrl(pathname = '/') {
+  if (!CONFIG.appUrl) return '';
+  const suffix = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  return `${CONFIG.appUrl}${suffix}`;
+}
+
+function parseBotCommand(message) {
+  const text = String(message?.text || '').trim();
+  if (!text.startsWith('/')) return { command: '', argument: '' };
+  const [rawCommand, ...rest] = text.split(/\s+/);
+  const command = rawCommand.slice(1).split('@')[0].toLowerCase();
+  return { command, argument: rest.join(' ').trim() };
+}
+
+async function sendStartMessage(chatId, user) {
+  const url = miniAppUrl('/');
+  const setting = await getMainSetting();
+  const text = [
+    `🎮 ${process.env.APP_NAME || 'UC ARENA'} ga xush kelibsiz!`,
+    '',
+    `💰 Balansingiz: ${normalizeHalf(user.balance)} UC`,
+    `👥 Takliflaringiz: ${user.referralCount || 0} ta`,
+    '',
+    'Kunlik bonus, referral, obuna vazifalari va UC Shop xizmatlaridan foydalaning.',
+  ].join('\n');
+
+  const keyboard = [];
+  if (url) keyboard.push([{ text: '🎮 MINI APPNI OCHISH', web_app: { url } }]);
+  if (CONFIG.adminUsername) {
+    keyboard.push([{ text: '💳 To‘lov bo‘yicha admin', url: `https://t.me/${CONFIG.adminUsername}` }]);
+  }
+  const replyMarkup = keyboard.length ? { inline_keyboard: keyboard } : undefined;
+
+  if (setting?.logoUrl) {
+    try {
+      return await telegramApi('sendPhoto', {
+        chat_id: chatId,
+        photo: setting.logoUrl,
+        caption: text,
+        reply_markup: replyMarkup,
+      });
+    } catch (error) {
+      console.warn('Start logosi yuborilmadi, matnli xabar yuboriladi:', error.message);
+    }
+  }
+
+  return telegramApi('sendMessage', {
+    chat_id: chatId,
+    text,
+    reply_markup: replyMarkup,
+  });
+}
+
+async function handleTelegramUpdate(update) {
+  const message = update?.message;
+  if (!message?.from || message.from.is_bot) return;
+
+  const { command, argument } = parseBotCommand(message);
+  if (!command) return;
+
+  const startParam = command === 'start' ? safeText(argument, 80) : '';
+  const user = await getOrCreateUser(message.from, startParam);
+  const chatId = message.chat.id;
+
+  if (command === 'start') {
+    await sendStartMessage(chatId, user);
+    return;
+  }
+
+  if (command === 'balance') {
+    await telegramApi('sendMessage', {
+      chat_id: chatId,
+      text: [
+        `💰 Balans: ${normalizeHalf(user.balance)} UC`,
+        `📈 Jami yig‘ilgan: ${normalizeHalf(user.totalEarned)} UC`,
+        `👥 Referrallar: ${user.referralCount || 0} ta`,
+      ].join('\n'),
+      reply_markup: miniAppUrl('/') ? {
+        inline_keyboard: [[{ text: '🎮 Mini Appni ochish', web_app: { url: miniAppUrl('/') } }]],
+      } : undefined,
+    });
+    return;
+  }
+
+  if (command === 'admin') {
+    if (!CONFIG.adminIds.has(String(message.from.id))) {
+      await telegramApi('sendMessage', { chat_id: chatId, text: '⛔ Sizda admin huquqi yo‘q.' });
+      return;
+    }
+    const url = miniAppUrl('/admin');
+    await telegramApi('sendMessage', {
+      chat_id: chatId,
+      text: '🛠 Admin panelni ochish uchun tugmani bosing.',
+      reply_markup: url ? {
+        inline_keyboard: [[{ text: '🛠 ADMIN PANEL', web_app: { url } }]],
+      } : undefined,
+    });
+    return;
+  }
+
+  if (command === 'help') {
+    await telegramApi('sendMessage', {
+      chat_id: chatId,
+      text: [
+        'Mavjud komandalar:',
+        '/start — Mini Appni ochish',
+        '/balance — UC balansni ko‘rish',
+        '/help — yordam',
+      ].join('\n'),
+    });
+  }
+}
+
+async function configureTelegramWebhook() {
+  if (!CONFIG.botToken || CONFIG.devMode) return;
+  if (!CONFIG.appUrl) {
+    throw new Error('Webhook uchun APP_URL yoki RENDER_EXTERNAL_URL topilmadi.');
+  }
+  const secretToken = telegramWebhookSecretToken();
+  if (!secretToken) throw new Error('WEBHOOK_SECRET environment variable ko‘rsatilmagan.');
+
+  const webhookUrl = `${CONFIG.appUrl}/telegram/webhook`;
+  await telegramApi('setWebhook', {
+    url: webhookUrl,
+    secret_token: secretToken,
+    allowed_updates: ['message'],
+    drop_pending_updates: false,
+    max_connections: 20,
+  });
+
+  await telegramApi('setMyCommands', {
+    commands: [
+      { command: 'start', description: 'UC Mini Appni ochish' },
+      { command: 'balance', description: 'UC balansim' },
+      { command: 'help', description: 'Yordam' },
+    ],
+  });
+
+  await telegramApi('setChatMenuButton', {
+    menu_button: {
+      type: 'web_app',
+      text: 'UC ARENA',
+      web_app: { url: miniAppUrl('/') },
+    },
+  });
+
+  const info = await telegramApi('getWebhookInfo');
+  console.log(`Telegram webhook faol: ${info.url || webhookUrl}`);
+  if (info.last_error_message) console.warn(`Webhook oxirgi xatosi: ${info.last_error_message}`);
+}
+
+app.post('/telegram/webhook', (req, res) => {
+  const expected = telegramWebhookSecretToken();
+  const received = req.get('x-telegram-bot-api-secret-token');
+  if (!expected || !secureEqualText(received, expected)) {
+    return res.status(403).json({ error: 'Webhook secret noto‘g‘ri.' });
+  }
+
+  res.sendStatus(200);
+  setImmediate(() => {
+    handleTelegramUpdate(req.body).catch((error) => {
+      console.error('Telegram update ishlovida xatolik:', error);
+    });
+  });
+});
+
+app.get('/telegram/webhook', (_req, res) => {
+  res.json({ status: 'webhook endpoint ready' });
+});
 
 app.get('/api/config', asyncHandler(async (_req, res) => {
   const setting = await getMainSetting();
@@ -1212,11 +1397,17 @@ async function start() {
     maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 10),
   });
 
-  httpServer = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`UC Mini App ${PORT}-portda ishga tushdi.`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    if (CONFIG.devMode) console.warn('DEV_MODE yoqilgan — production uchun false qiling.');
+  await new Promise((resolve, reject) => {
+    httpServer = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`UC Mini App ${PORT}-portda ishga tushdi.`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      if (CONFIG.devMode) console.warn('DEV_MODE yoqilgan — production uchun false qiling.');
+      resolve();
+    });
+    httpServer.once('error', reject);
   });
+
+  await configureTelegramWebhook();
 }
 
 async function shutdown(signal) {

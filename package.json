@@ -1,8 +1,8 @@
 {
   "name": "pubg-uc-telegram-miniapp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "PUBG Mobile UC Telegram Mini App with referral, subscription tasks, shop and admin panel",
+  "description": "PUBG Mobile UC Telegram Mini App with secure Telegram webhook, referral, subscription tasks, shop and admin panel",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
