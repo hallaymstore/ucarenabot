@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: pubg-uc-miniapp
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: BOT_USERNAME
+        sync: false
+      - key: MINI_APP_SHORT_NAME
+        value: ""
+      - key: ADMIN_IDS
+        value: "8231044589"
+      - key: ADMIN_TELEGRAM_USERNAME
+        value: Qoryogdiyev
+      - key: APP_NAME
+        value: UC ARENA
+      - key: DAILY_BONUS
+        value: "0.5"
+      - key: REFERRER_BONUS
+        value: "1"
+      - key: REFERRED_BONUS
+        value: "0.5"
+      - key: TASK_BONUS
+        value: "0.5"
+      - key: MIN_WITHDRAW
+        value: "30"
+      - key: AUTH_MAX_AGE_SECONDS
+        value: "86400"
+      - key: REFERRAL_SALT
+        generateValue: true
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: uc-shop
+      - key: DEV_MODE
+        value: "false"
+      - key: DEV_TELEGRAM_ID
+        value: "8231044589"
+      - key: MANDATORY_CACHE_SECONDS
+        value: "300"
+      - key: MONGODB_MAX_POOL_SIZE
+        value: "10"

@@ -1,0 +1,27 @@
+PUBG UC MINI APP — RENDER DEPLOY
+
+1. Ushbu papkadagi fayllarni GitHub repository root qismiga yuklang.
+2. Render Dashboard -> New -> Blueprint ni tanlang.
+3. GitHub repositoryni ulang. Render render.yaml faylini avtomatik o‘qiydi.
+4. Render so‘ragan maxfiy Environment Variables qiymatlarini kiriting:
+   MONGODB_URI
+   BOT_TOKEN
+   BOT_USERNAME
+   CLOUDINARY_CLOUD_NAME
+   CLOUDINARY_API_KEY
+   CLOUDINARY_API_SECRET
+5. Deploy tugagach, https://SIZNING-SERVICE.onrender.com/health sahifasida status "ok" bo‘lishini tekshiring.
+6. BotFather ichida Mini App URL sifatida Render bergan HTTPS URLni kiriting.
+7. Telegram majburiy obuna tekshirishi uchun botni kanal/guruhlarda admin qiling.
+8. Admin panel: https://SIZNING-SERVICE.onrender.com/admin
+
+Qo‘lda Web Service yaratsangiz:
+Build Command: npm ci
+Start Command: npm start
+Health Check Path: /health
+Node: package.json orqali 22.x
+
+MUHIM:
+- .env faylini GitHubga yuklamang.
+- DEV_MODE productionda false bo‘lishi shart.
+- Render PORT qiymatini avtomatik beradi; PORTni qo‘lda kiritish shart emas.

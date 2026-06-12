@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#0f1113">
+  <title>UC Arena</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg:#0f1113;--panel:#171a1d;--panel2:#1d2125;--line:#30363c;--text:#f4f6f8;
+      --muted:#919aa3;--yellow:#f2a900;--yellow2:#ffc83d;--olive:#7f8f3f;--danger:#ef5350;
+      --ok:#57b879;--blue:#57a5e5;--r:3px;--g:3px;--nav:68px;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px}
+    body{padding:env(safe-area-inset-top) 0 calc(var(--nav) + env(safe-area-inset-bottom));overflow-x:hidden}
+    button,input,textarea{font:inherit}
+    button{border:0;cursor:pointer}
+    .hidden{display:none!important}
+    .loading{position:fixed;inset:0;z-index:1000;background:var(--bg);display:grid;place-items:center}
+    .loader-card{display:grid;gap:10px;text-align:center;color:var(--muted)}
+    .uc-orbit{width:66px;height:66px;border:2px solid var(--line);border-top-color:var(--yellow);border-radius:50%;display:grid;place-items:center;animation:spin 1s linear infinite;margin:auto}
+    .uc-orbit b{color:var(--yellow);font-size:16px;animation:reverseSpin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}} @keyframes reverseSpin{to{transform:rotate(-360deg)}}
+    .app{max-width:720px;margin:auto;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:20;background:rgba(15,17,19,.96);border-bottom:1px solid var(--line);padding:8px 10px;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(14px)}
+    .brand{display:flex;align-items:center;gap:7px;min-width:0}.brand-mark{width:34px;height:34px;background:var(--yellow);color:#111;display:grid;place-items:center;border-radius:var(--r);font-weight:1000;box-shadow:0 0 0 1px #000 inset;overflow:hidden}.brand-mark img{width:100%;height:100%;object-fit:cover;display:block}.brand-text{line-height:1}.brand-text strong{display:block;font-size:14px;letter-spacing:.8px}.brand-text small{color:var(--muted);font-size:10px}
+    .balance-pill{height:34px;padding:0 9px;display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);font-weight:900;color:var(--yellow2)}
+    .coin{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--yellow);color:#121212;border:2px solid #ffe07a;font-size:8px;font-weight:1000;box-shadow:0 0 0 1px #6e4a00;animation:coinPulse 2.3s ease-in-out infinite}
+    @keyframes coinPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+    .page{display:none;padding:8px 8px 14px;animation:pageIn .2s ease}.page.active{display:block}@keyframes pageIn{from{opacity:.25;transform:translateY(4px)}to{opacity:1;transform:none}}
+    .hero{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--yellow);border-radius:var(--r);padding:14px;position:relative;overflow:hidden}
+    .hero:after{content:"UC";position:absolute;right:-2px;bottom:-25px;font-size:94px;font-weight:1000;color:#22272c;letter-spacing:-9px;z-index:0}.hero>*{position:relative;z-index:1}.eyebrow{color:var(--yellow);font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:900}.hero h1{font-size:24px;line-height:1.05;margin:6px 0 5px;max-width:270px}.hero p{color:var(--muted);margin:0 0 12px;max-width:390px;font-size:12px;line-height:1.5}
+    .btn-row{display:flex;gap:var(--g);flex-wrap:wrap}.btn{min-height:38px;border-radius:var(--r);padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:850;background:var(--yellow);color:#121212;border:1px solid #ffca38}.btn.secondary{background:var(--panel2);color:var(--text);border-color:var(--line)}.btn.danger{background:#351c1d;color:#ff8e8b;border-color:#633031}.btn.ok{background:#193525;color:#79d79a;border-color:#2c6543}.btn:disabled{opacity:.45;cursor:not-allowed}.btn.small{min-height:30px;padding:0 8px;font-size:11px}.btn.block{width:100%}
+    .icon{width:17px;height:17px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}.icon.live{animation:float 2s ease-in-out infinite}@keyframes float{50%{transform:translateY(-2px)}}
+    .section-head{display:flex;align-items:end;justify-content:space-between;margin:13px 1px 6px}.section-head h2{margin:0;font-size:14px}.section-head span{color:var(--muted);font-size:10px}
+    .grid{display:grid;gap:var(--g)}.stats{grid-template-columns:repeat(3,1fr)}.stat{background:var(--panel);border:1px solid var(--line);padding:9px 7px;border-radius:var(--r);min-width:0}.stat small{display:block;color:var(--muted);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat strong{display:block;margin-top:4px;font-size:15px}.stat strong.yellow{color:var(--yellow2)}
+    .daily{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#1f2118;border:1px solid #4e5424;padding:9px;border-radius:var(--r)}.daily-info{display:flex;gap:8px;align-items:center;min-width:0}.daily-icon{width:39px;height:39px;background:var(--yellow);color:#111;display:grid;place-items:center;border-radius:var(--r)}.daily h3{margin:0 0 2px;font-size:13px}.daily p{margin:0;color:#aaa97d;font-size:10px}.timer{font-variant-numeric:tabular-nums}
+    .task,.history-item{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px;display:flex;align-items:center;gap:8px}.task-logo{width:38px;height:38px;display:grid;place-items:center;background:#202833;border:1px solid #33455b;color:#7ab7ee;border-radius:var(--r);flex:0 0 auto}.task-main{min-width:0;flex:1}.task-title{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.task-meta{color:var(--muted);font-size:10px;margin-top:2px}.reward{font-weight:950;color:var(--yellow2);white-space:nowrap}.task-actions{display:flex;gap:var(--g);align-items:center}.empty{border:1px dashed var(--line);color:var(--muted);padding:22px 12px;text-align:center;border-radius:var(--r);background:var(--panel)}
+    .shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--g)}.product{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}.product-media{height:112px;background:#22272c;display:grid;place-items:center;position:relative;border-bottom:1px solid var(--line)}.product-media img{width:100%;height:100%;object-fit:cover}.product-media .fallback{font-size:28px;font-weight:1000;color:var(--yellow)}.product-stock{position:absolute;top:4px;right:4px;background:#121416e8;border:1px solid var(--line);padding:3px 5px;border-radius:2px;font-size:9px}.product-body{padding:8px}.product h3{font-size:12px;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.uc-value{font-size:19px;font-weight:1000;color:var(--yellow2)}.price{color:var(--muted);font-size:10px;margin:2px 0 7px}
+    .invite-card{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--yellow);padding:14px;border-radius:var(--r);text-align:center}.invite-graphic{width:78px;height:78px;margin:2px auto 10px;display:grid;place-items:center;background:#252816;border:1px solid #555c25;border-radius:50%;color:var(--yellow)}.invite-card h2{margin:0 0 4px;font-size:18px}.invite-card p{color:var(--muted);line-height:1.55;margin:0 0 12px}.ref-code{display:flex;gap:var(--g);margin:8px 0}.ref-code input{flex:1;min-width:0;height:39px;background:#0d0f11;border:1px solid var(--line);color:var(--yellow2);font-weight:900;padding:0 10px;border-radius:var(--r);outline:none}
+    .steps{display:grid;gap:var(--g);counter-reset:s}.step{counter-increment:s;background:var(--panel);border:1px solid var(--line);padding:10px;display:flex;gap:9px;align-items:flex-start;border-radius:var(--r)}.step:before{content:counter(s);width:25px;height:25px;background:var(--yellow);color:#111;font-weight:950;display:grid;place-items:center;border-radius:var(--r);flex:0 0 auto}.step b{display:block;font-size:12px}.step small{color:var(--muted);line-height:1.4}
+    .profile{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);padding:10px;border-radius:var(--r)}.avatar{width:51px;height:51px;object-fit:cover;background:#282d32;border:1px solid var(--line);border-radius:var(--r);display:grid;place-items:center;font-size:18px;font-weight:900;color:var(--yellow)}.profile-main{min-width:0;flex:1}.profile-main h2{font-size:15px;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.profile-main p{margin:0;color:var(--muted);font-size:10px}.badge{display:inline-flex;align-items:center;gap:4px;color:var(--yellow2);font-size:9px;font-weight:900;margin-top:5px}
+    .menu-list{display:grid;gap:var(--g)}.menu-item{width:100%;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:10px;border-radius:var(--r);text-align:left}.menu-item span{flex:1;font-weight:750}.menu-item small{color:var(--muted)}
+    .history-item{align-items:flex-start}.history-icon{width:32px;height:32px;background:var(--panel2);display:grid;place-items:center;border-radius:var(--r);color:var(--yellow)}.history-main{flex:1;min-width:0}.history-main b{font-size:11px}.history-main small{display:block;color:var(--muted);font-size:9px;margin-top:2px}.amount{font-weight:900}.amount.plus{color:var(--ok)}.amount.minus{color:var(--danger)}
+    .status{display:inline-flex;padding:3px 5px;border:1px solid var(--line);border-radius:2px;font-size:8px;font-weight:900;text-transform:uppercase}.status.pending{color:var(--yellow2);border-color:#68541d;background:#29240f}.status.approved,.status.completed,.status.paid{color:#79d79a;border-color:#286241;background:#13291d}.status.rejected{color:#ff8e8b;border-color:#633031;background:#351c1d}
+    .bottom-nav{position:fixed;z-index:50;left:0;right:0;bottom:0;height:calc(var(--nav) + env(safe-area-inset-bottom));padding:4px max(7px,env(safe-area-inset-left)) env(safe-area-inset-bottom);background:#111315;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);gap:2px}.nav-btn{background:transparent;color:#78828b;border-radius:var(--r);display:grid;place-items:center;align-content:center;gap:2px;min-width:0}.nav-btn .icon{width:20px;height:20px}.nav-btn span{font-size:8px;font-weight:800}.nav-btn.active{background:#25230f;color:var(--yellow2);border:1px solid #4c431a}
+    .modal{position:fixed;z-index:200;inset:0;background:#000b;display:none;align-items:flex-end;justify-content:center;padding:12px}.modal.open{display:flex}.sheet{width:min(100%,560px);max-height:90vh;overflow:auto;background:#16191c;border:1px solid var(--line);border-radius:var(--r);padding:10px;animation:sheetIn .18s ease}@keyframes sheetIn{from{transform:translateY(14px);opacity:.3}to{transform:none;opacity:1}}.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.sheet-head h3{margin:0;font-size:14px}.close{width:31px;height:31px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:var(--r)}
+    .form{display:grid;gap:5px}.field{display:grid;gap:3px}.field label{font-size:9px;color:var(--muted);font-weight:800}.field input,.field textarea{width:100%;background:#0e1012;color:var(--text);border:1px solid var(--line);border-radius:var(--r);padding:9px;outline:none}.field input:focus,.field textarea:focus{border-color:var(--yellow)}.field textarea{min-height:72px;resize:vertical}.notice{padding:8px;background:#25230f;border:1px solid #554a18;color:#d9cc8f;border-radius:var(--r);font-size:10px;line-height:1.45}
+
+    .access-gate{position:fixed;inset:0;z-index:900;background:#0f1113;display:grid;place-items:center;padding:12px}.gate-card{width:min(100%,520px);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--yellow);padding:12px;border-radius:var(--r)}.gate-brand{display:flex;align-items:center;gap:8px;margin-bottom:10px}.gate-brand .brand-mark{width:42px;height:42px}.gate-card h2{margin:0;font-size:17px}.gate-card p{margin:4px 0 10px;color:var(--muted);line-height:1.5;font-size:11px}.mandatory-list{display:grid;gap:var(--g);margin-bottom:7px}.mandatory-item{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:7px;align-items:center;background:var(--panel2);border:1px solid var(--line);padding:7px;border-radius:var(--r)}.mandatory-icon{width:34px;height:34px;display:grid;place-items:center;background:#202833;color:#7ab7ee;border:1px solid #33455b;border-radius:var(--r)}.mandatory-item b{font-size:11px}.mandatory-item small{display:block;color:var(--muted);font-size:9px;margin-top:2px}.mandatory-item.joined{border-color:#2c6543}.gate-error{display:none;background:#351c1d;border:1px solid #633031;color:#ffaaa7;padding:7px;border-radius:var(--r);font-size:10px;margin-bottom:6px}.gate-error.show{display:block}.payment-card{text-align:center;background:#202316;border:1px solid #555c25;padding:12px;border-radius:var(--r)}.payment-card .coin{width:48px;height:48px;font-size:13px;margin:0 auto 8px}.payment-card h3{margin:0 0 4px}.payment-card p{color:var(--muted);font-size:10px;line-height:1.5;margin:0 0 8px}
+    .toast{position:fixed;z-index:500;left:50%;bottom:calc(var(--nav) + 15px);transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;background:#24282c;border:1px solid var(--line);color:var(--text);padding:9px 12px;border-radius:var(--r);max-width:calc(100% - 30px);font-size:11px;transition:.2s}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.error{border-color:#633031;color:#ffaaa7}.toast.ok{border-color:#2c6543;color:#8de1aa}
+    .legal{color:#626b73;text-align:center;font-size:8px;line-height:1.4;margin:14px 30px}
+    @media(max-width:360px){.hero h1{font-size:20px}.shop-grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}.task{align-items:flex-start}.task-actions{flex-direction:column}.product-media{height:145px}}
+  </style>
+</head>
+<body>
+<div class="access-gate hidden" id="accessGate"><div class="gate-card"><div class="gate-brand"><div class="brand-mark" id="gateLogo">UC</div><div><h2>Majburiy obuna</h2><p style="margin:2px 0 0">Mini App’dan foydalanish uchun quyidagi kanal va guruhlarga qo‘shiling.</p></div></div><div class="gate-error" id="gateError"></div><div class="mandatory-list" id="mandatoryList"></div><button class="btn block" id="verifyMandatory">Obunani tekshirish</button></div></div>
+<div class="loading" id="loading"><div class="loader-card"><div class="uc-orbit"><b>UC</b></div><div>UC markazi yuklanmoqda…</div></div></div>
+<div class="app hidden" id="app">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark" id="brandLogo">UC</div><div class="brand-text"><strong id="appName">UC ARENA</strong><small>PUBG Mobile xizmatlari</small></div></div>
+    <button class="balance-pill" data-go="profile"><span class="coin">UC</span><span id="topBalance">0</span></button>
+  </header>
+
+  <main>
+    <section class="page active" id="page-home">
+      <div class="hero">
+        <div class="eyebrow">UC yig‘ish markazi</div>
+        <h1>Bonus yig‘ing, UC oling.</h1>
+        <p>Kunlik bonus, do‘stlar va obuna vazifalari orqali balansingizni oshiring.</p>
+        <div class="btn-row"><button class="btn" data-go="earn" id="heroEarn"></button><button class="btn secondary" data-open="withdraw" id="heroWithdraw"></button></div>
+      </div>
+      <div class="section-head"><h2>Hisob ko‘rsatkichlari</h2><span>jonli ma’lumot</span></div>
+      <div class="grid stats">
+        <div class="stat"><small>Joriy balans</small><strong class="yellow"><span id="statBalance">0</span> UC</strong></div>
+        <div class="stat"><small>Jami yig‘ilgan</small><strong><span id="statEarned">0</span> UC</strong></div>
+        <div class="stat"><small>Takliflar</small><strong id="statRefs">0</strong></div>
+      </div>
+      <div class="section-head"><h2>Kunlik bonus</h2><span>har 24 soatda</span></div>
+      <div class="daily">
+        <div class="daily-info"><div class="daily-icon" id="dailyIcon"></div><div><h3>Har kuni <span id="dailyAmount">0.5</span> UC</h3><p id="dailyText">Bonusni hozir oling</p></div></div>
+        <button class="btn small" id="dailyBtn">Olish</button>
+      </div>
+      <div class="section-head"><h2>Faol vazifalar</h2><span id="homeTaskCount">0 ta</span></div>
+      <div class="grid" id="homeTasks"></div>
+      <div class="legal">Bu mustaqil xizmat. PUBG MOBILE, KRAFTON yoki Tencent bilan rasmiy bog‘lanmagan.</div>
+    </section>
+
+    <section class="page" id="page-earn">
+      <div class="section-head" style="margin-top:2px"><h2>UC ishlash</h2><span>tekshiriladigan vazifalar</span></div>
+      <div class="notice">Kanal yoki guruhga qo‘shiling, keyin “Tekshirish” tugmasini bosing. Har bir vazifa bonusi faqat bir marta beriladi.</div>
+      <div class="grid" id="taskList" style="margin-top:5px"></div>
+    </section>
+
+    <section class="page" id="page-shop">
+      <div class="section-head" style="margin-top:2px"><h2>UC Shop</h2><span>admin orqali to‘lov</span></div>
+      <div class="shop-grid" id="shopList"></div>
+      <div class="section-head"><h2>Buyurtmalarim</h2><span>oxirgi holatlar</span></div>
+      <div class="grid" id="purchaseList"></div>
+    </section>
+
+    <section class="page" id="page-invite">
+      <div class="invite-card">
+        <div class="invite-graphic" id="inviteIcon"></div>
+        <h2>Do‘st taklif qiling</h2>
+        <p>Siz har bir haqiqiy taklif uchun <b id="referrerAmount">1 UC</b>, do‘stingiz esa <b id="referredAmount">0.5 UC</b> oladi.</p>
+        <div class="ref-code"><input id="refLink" readonly value=""><button class="btn secondary" id="copyRef"></button></div>
+        <button class="btn block" id="shareRef"></button>
+      </div>
+      <div class="section-head"><h2>Qanday ishlaydi?</h2><span>3 oddiy qadam</span></div>
+      <div class="steps"><div class="step"><div><b>Havolani ulashing</b><small>Telegram orqali shaxsiy referral havolangizni yuboring.</small></div></div><div class="step"><div><b>Do‘st Mini App’ni ochadi</b><small>Yangi foydalanuvchi havola orqali tizimga kiradi.</small></div></div><div class="step"><div><b>Bonus avtomatik tushadi</b><small>Ikkala hisobga ham belgilangan UC bir marta yoziladi.</small></div></div></div>
+      <div class="section-head"><h2>Natija</h2><span>takliflar statistikasi</span></div>
+      <div class="grid stats"><div class="stat"><small>Taklif qilingan</small><strong id="inviteCount">0</strong></div><div class="stat"><small>Referral daromad</small><strong class="yellow" id="inviteIncome">0 UC</strong></div><div class="stat"><small>Keyingi maqsad</small><strong id="nextGoal">5</strong></div></div>
+    </section>
+
+    <section class="page" id="page-profile">
+      <div class="profile"><div id="avatar" class="avatar">U</div><div class="profile-main"><h2 id="profileName">Foydalanuvchi</h2><p id="profileUsername">Telegram hisob</p><div class="badge" id="profileBadge"></div></div></div>
+      <div class="section-head"><h2>Balans</h2><span>UC hisobingiz</span></div>
+      <div class="grid stats"><div class="stat"><small>Mavjud</small><strong class="yellow"><span id="profileBalance">0</span> UC</strong></div><div class="stat"><small>Yechilgan</small><strong><span id="profileWithdrawn">0</span> UC</strong></div><div class="stat"><small>Minimum</small><strong><span id="profileMin">30</span> UC</strong></div></div>
+      <div class="section-head"><h2>Amallar</h2><span>hisob boshqaruvi</span></div>
+      <div class="menu-list">
+        <button class="menu-item" data-open="withdraw"><i data-icon="wallet"></i><span>UC yechib olish</span><small>So‘rov yuborish</small></button>
+        <button class="menu-item" id="showWithdrawals"><i data-icon="clock"></i><span>Yechib olish tarixi</span><small>Holatlarni ko‘rish</small></button>
+        <button class="menu-item" id="showLedger"><i data-icon="history"></i><span>Balans tarixi</span><small>Kirim va chiqimlar</small></button>
+        <button class="menu-item hidden" id="adminLink"><i data-icon="shield"></i><span>Admin panel</span><small>Boshqaruv</small></button>
+      </div>
+      <div class="section-head"><h2 id="historyTitle">So‘nggi operatsiyalar</h2><span>80 tagacha</span></div>
+      <div class="grid" id="historyList"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="home"><i data-icon="home"></i><span>Bosh sahifa</span></button>
+    <button class="nav-btn" data-page="earn"><i data-icon="target"></i><span>UC ishlash</span></button>
+    <button class="nav-btn" data-page="shop"><i data-icon="shopping"></i><span>UC Shop</span></button>
+    <button class="nav-btn" data-page="invite"><i data-icon="users"></i><span>Referral</span></button>
+    <button class="nav-btn" data-page="profile"><i data-icon="user"></i><span>Profil</span></button>
+  </nav>
+</div>
+
+<div class="modal" id="withdrawModal"><div class="sheet"><div class="sheet-head"><h3>UC yechib olish</h3><button class="close" data-close="withdraw">×</button></div><form class="form" id="withdrawForm"><div class="notice">Minimum <b id="withdrawMin">30 UC</b>. So‘rov yuborilganda UC balansdan rezerv qilinadi; rad etilsa avtomatik qaytariladi.</div><div class="field"><label>UC miqdori</label><input name="amount" type="number" min="30" step="0.5" required placeholder="30"></div><div class="field"><label>PUBG Player ID</label><input name="pubgId" required minlength="4" maxlength="40" placeholder="Masalan: 51234567890"></div><div class="field"><label>PUBG nickname</label><input name="pubgNickname" maxlength="50" placeholder="Ixtiyoriy"></div><button class="btn block" type="submit">So‘rov yuborish</button></form></div></div>
+<div class="modal" id="buyModal"><div class="sheet"><div class="sheet-head"><h3>UC Shop buyurtmasi</h3><button class="close" data-close="buy">×</button></div><div id="buySummary" class="notice" style="margin-bottom:6px"></div><form class="form" id="buyForm"><input type="hidden" name="itemId"><div class="field"><label>PUBG Player ID</label><input name="pubgId" required minlength="4" maxlength="40" placeholder="Player ID"></div><div class="field"><label>PUBG nickname</label><input name="pubgNickname" maxlength="50" placeholder="Nickname"></div><div class="field"><label>Telefon raqam</label><input name="phone" maxlength="30" placeholder="+998 ..."></div><button class="btn block" type="submit">Buyurtma yaratish</button></form></div></div>
+<div class="modal" id="paymentModal"><div class="sheet"><div class="sheet-head"><h3>Buyurtma tasdiqlandi</h3><button class="close" data-close="payment">×</button></div><div class="payment-card"><span class="coin">UC</span><h3 id="paymentTitle">UC Shop buyurtmasi</h3><p id="paymentText">Buyurtma yaratildi. To‘lovni davom ettirish uchun administratorga yozing.</p><button class="btn block" id="paymentAdminBtn">To‘lov uchun @Qoryogdiyev</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  tg?.ready(); tg?.expand(); tg?.setHeaderColor?.('#0f1113'); tg?.setBackgroundColor?.('#0f1113');
+
+  const state = { config:null, user:null, refLink:'', tasks:[], shop:[], purchases:[], currentPage:'home', buyItem:null, dailyTimer:null, paymentLink:'', appReady:false };
+  const $ = (q,root=document)=>root.querySelector(q); const $$=(q,root=document)=>[...root.querySelectorAll(q)];
+  const paths={
+    home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/>',
+    target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+    shopping:'<path d="M6 8h12l-1 13H7L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+    users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    gift:'<rect x="3" y="8" width="18" height="13"/><path d="M12 8v13M3 12h18"/><path d="M7.5 8C5 8 4 6.5 4.8 5c1.1-2 4.7.2 7.2 3M16.5 8c2.5 0 3.5-1.5 2.7-3-1.1-2-4.7.2-7.2 3"/>',
+    wallet:'<path d="M3 6h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/><path d="M3 6V5a2 2 0 0 1 2-2h12v3M16 13h5"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    history:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+    shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+    share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"/>',
+    copy:'<rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+    send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+    check:'<path d="m5 12 4 4L19 6"/>',
+    channel:'<path d="M3 11v2l13 5V6L3 11Z"/><path d="M16 9h2a3 3 0 0 1 0 6h-2M6 14l1 6h4l-2-5"/>',
+    group:'<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 4a3 3 0 0 1 0 6M17 14a5 5 0 0 1 4 5"/>',
+    chevron:'<path d="m9 18 6-6-6-6"/>',
+    external:'<path d="M15 3h6v6M10 14 21 3"/><path d="M18 13v7H4V6h7"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    refresh:'<path d="M20 7h-5V2"/><path d="M20 7a9 9 0 1 0 1 8"/>',
+  };
+  function icon(name,cls=''){return `<svg class="icon ${cls}" viewBox="0 0 24 24" aria-hidden="true">${paths[name]||paths.target}</svg>`}
+  $$('[data-icon]').forEach(el=>el.outerHTML=icon(el.dataset.icon));
+  $('#heroEarn').innerHTML=icon('target','live')+' UC ishlash'; $('#heroWithdraw').innerHTML=icon('wallet')+' Yechib olish';
+  $('#dailyIcon').innerHTML=icon('gift','live'); $('#inviteIcon').innerHTML=icon('users','live'); $('#copyRef').innerHTML=icon('copy'); $('#shareRef').innerHTML=icon('share')+' Telegram orqali ulashish'; $('#profileBadge').innerHTML=icon('shield')+' TASDIQLANGAN HISOB';
+
+  function haptic(type='light'){try{tg?.HapticFeedback?.impactOccurred(type)}catch{}}
+  function notify(msg,type=''){const t=$('#toast');t.textContent=msg;t.className=`toast ${type} show`;clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2600)}
+  function money(n){return Number(n||0).toLocaleString('uz-UZ')}
+  function uc(n){return Number(n||0).toLocaleString('uz-UZ',{maximumFractionDigits:1})}
+  function dateTime(v){return new Date(v).toLocaleString('uz-UZ',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})}
+  function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+  function statusText(v){return ({pending:'Kutilmoqda',approved:'Tasdiqlandi',rejected:'Rad etildi',paid:'To‘landi',completed:'Yakunlandi'})[v]||v}
+  function authHeaders(extra={}){const headers={'x-telegram-init-data':tg?.initData||'',...extra};if(state.config?.devMode)headers['x-dev-user-id']=localStorage.getItem('devTelegramId')||'8231044589';return headers}
+  async function api(url,opt={}){const isForm=opt.body instanceof FormData;const res=await fetch(url,{...opt,headers:{...authHeaders(),...(isForm?{}:{'content-type':'application/json'}),...(opt.headers||{})}});const data=await res.json().catch(()=>({error:'Server javobi o‘qilmadi.'}));if(res.status===428&&data.code==='SUBSCRIPTION_REQUIRED'){showMandatory(data);const err=new Error(data.error||'Majburiy obuna talab qilinadi.');err.code=data.code;throw err}if(!res.ok)throw new Error(data.error||'Xatolik yuz berdi.');return data}
+
+  function applyLogo(){const logo=state.config?.logoUrl;for(const id of ['brandLogo','gateLogo']){const el=$('#'+id);if(el)el.innerHTML=logo?`<img src="${escapeHtml(logo)}" alt="Logo">`:'UC'}}
+  function openTelegram(url){if(!url)return;tg?.openTelegramLink?tg.openTelegramLink(url):window.open(url,'_blank')}
+  function showMandatory(data){const items=data.subscriptions||[];$('#mandatoryList').innerHTML=items.length?items.map(x=>`<div class="mandatory-item ${x.joined?'joined':''}"><div class="mandatory-icon">${icon(x.type==='group'?'group':'channel','live')}</div><div><b>${escapeHtml(x.title)}</b><small>${x.joined?'Obuna tasdiqlandi':x.checkError?'Tekshiruv xatosi: '+escapeHtml(x.checkError):'Obuna talab qilinadi'}</small></div><button class="btn small ${x.joined?'ok':'secondary'}" data-mandatory-link="${escapeHtml(x.inviteLink)}">${x.joined?'Qo‘shilgan':'Kirish'}</button></div>`).join(''):'<div class="empty">Majburiy obuna mavjud emas.</div>';$$('[data-mandatory-link]').forEach(b=>b.onclick=()=>openTelegram(b.dataset.mandatoryLink));const errors=items.filter(x=>x.checkError).map(x=>x.title+': '+x.checkError);$('#gateError').textContent=errors.join(' | ');$('#gateError').classList.toggle('show',errors.length>0);$('#accessGate').classList.remove('hidden');$('#app').classList.add('hidden');$('#loading').classList.add('hidden')}
+  async function verifyMandatory(force=false){const btn=$('#verifyMandatory');if(force){btn.disabled=true;btn.textContent='Tekshirilmoqda…'}try{const res=await fetch(force?'/api/mandatory/verify':'/api/mandatory',{method:force?'POST':'GET',headers:{...authHeaders(),'content-type':'application/json'},body:force?'{}':undefined});const data=await res.json().catch(()=>({error:'Server javobi o‘qilmadi.'}));if(!data.passed){showMandatory(data);return false}$('#accessGate').classList.add('hidden');return true}catch(error){showMandatory({subscriptions:[],error:error.message});$('#gateError').textContent=error.message;$('#gateError').classList.add('show');return false}finally{btn.disabled=false;btn.textContent='Obunani tekshirish'}}
+  async function initializeApp(){if(state.appReady)return;await Promise.all([loadTasks(),loadShopData(),loadLedger()]);state.appReady=true;$('#loading').classList.add('hidden');$('#app').classList.remove('hidden')}
+  $('#verifyMandatory').onclick=async()=>{const passed=await verifyMandatory(true);if(passed){notify('Obunalar tasdiqlandi.','ok');await initializeApp()}};
+
+  function setPage(name){state.currentPage=name;$$('.page').forEach(p=>p.classList.toggle('active',p.id===`page-${name}`));$$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));window.scrollTo({top:0,behavior:'smooth'});haptic();if(name==='shop')loadShopData();if(name==='profile')loadLedger()}
+  $$('[data-page]').forEach(b=>b.onclick=()=>setPage(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>setPage(b.dataset.go));
+  function openModal(name){$(`#${name}Modal`).classList.add('open');haptic()};function closeModal(name){$(`#${name}Modal`).classList.remove('open')}
+  $$('[data-open]').forEach(b=>b.onclick=()=>openModal(b.dataset.open));$$('[data-close]').forEach(b=>b.onclick=()=>closeModal(b.dataset.close));$$('.modal').forEach(m=>m.onclick=e=>{if(e.target===m)m.classList.remove('open')});
+
+  function renderUser(){const u=state.user;if(!u)return;['topBalance','statBalance','profileBalance'].forEach(id=>$(`#${id}`).textContent=uc(u.balance));$('#statEarned').textContent=uc(u.totalEarned);$('#statRefs').textContent=u.referralCount;$('#inviteCount').textContent=u.referralCount;$('#inviteIncome').textContent=`${uc(u.referralCount*state.config.referrerBonus)} UC`;$('#nextGoal').textContent=Math.ceil((u.referralCount+1)/5)*5;$('#profileWithdrawn').textContent=uc(u.totalWithdrawn);$('#profileMin').textContent=uc(state.config.minWithdraw);$('#profileName').textContent=[u.firstName,u.lastName].filter(Boolean).join(' ')||'Foydalanuvchi';$('#profileUsername').textContent=u.username?`@${u.username}`:`Telegram ID: ${u.id}`;const avatar=$('#avatar');if(u.photoUrl){avatar.innerHTML=`<img src="${escapeHtml(u.photoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover">`}else avatar.textContent=(u.firstName||'U')[0].toUpperCase();$('#refLink').value=state.refLink||'BOT_USERNAME sozlanmagan';$('#adminLink').classList.toggle('hidden',!u.isAdmin);updateDaily();}
+
+  function updateDaily(){clearInterval(state.dailyTimer);const at=state.user?.dailyBonusAt;if(!at){$('#dailyBtn').disabled=false;$('#dailyBtn').textContent='Olish';$('#dailyText').textContent='Bonusni hozir oling';return}const tick=()=>{const left=new Date(at).getTime()+86400000-Date.now();if(left<=0){clearInterval(state.dailyTimer);$('#dailyBtn').disabled=false;$('#dailyBtn').textContent='Olish';$('#dailyText').textContent='Bonus tayyor';return}const h=Math.floor(left/3600000),m=Math.floor(left%3600000/60000),s=Math.floor(left%60000/1000);$('#dailyBtn').disabled=true;$('#dailyBtn').textContent='Kutilmoqda';$('#dailyText').innerHTML=`Keyingi bonus: <span class="timer">${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</span>`};tick();state.dailyTimer=setInterval(tick,1000)}
+  $('#dailyBtn').onclick=async()=>{const b=$('#dailyBtn');b.disabled=true;try{const d=await api('/api/bonus/daily',{method:'POST',body:'{}'});state.user=d.user;renderUser();notify(d.message,'ok');haptic('medium')}catch(e){notify(e.message,'error');updateDaily()}};
+
+  function taskCard(t){const joined=t.claimed;return `<div class="task"><div class="task-logo">${icon(t.type==='group'?'group':'channel','live')}</div><div class="task-main"><div class="task-title">${escapeHtml(t.title)}</div><div class="task-meta">${t.type==='group'?'Telegram guruhi':'Telegram kanali'}</div></div><div class="reward">+${uc(t.reward)} UC</div><div class="task-actions">${joined?`<button class="btn small ok" disabled>${icon('check')} Olingan</button>`:`<button class="btn small secondary" data-join="${escapeHtml(t.inviteLink)}">${icon('external')} Kirish</button><button class="btn small" data-claim="${t._id}">${icon('check')} Tekshirish</button>`}</div></div>`}
+  function bindTasks(root){$$('[data-join]',root).forEach(b=>b.onclick=()=>{haptic();tg?.openTelegramLink?tg.openTelegramLink(b.dataset.join):window.open(b.dataset.join,'_blank')});$$('[data-claim]',root).forEach(b=>b.onclick=async()=>{b.disabled=true;try{const d=await api(`/api/tasks/${b.dataset.claim}/claim`,{method:'POST',body:'{}'});state.user=d.user;renderUser();await loadTasks();notify(d.message,'ok');haptic('medium')}catch(e){notify(e.message,'error');b.disabled=false}})}
+  async function loadTasks(){try{const d=await api('/api/tasks');state.tasks=d.tasks;const html=d.tasks.length?d.tasks.map(taskCard).join(''):`<div class="empty">Hozircha faol vazifa yo‘q.</div>`;$('#taskList').innerHTML=html;$('#homeTasks').innerHTML=d.tasks.length?d.tasks.slice(0,3).map(taskCard).join(''):`<div class="empty">Yangi vazifalar tez orada qo‘shiladi.</div>`;$('#homeTaskCount').textContent=`${d.tasks.filter(t=>!t.claimed).length} ta`;bindTasks($('#taskList'));bindTasks($('#homeTasks'))}catch(e){notify(e.message,'error')}}
+
+  function productCard(i){return `<article class="product"><div class="product-media">${i.imageUrl?`<img src="${escapeHtml(i.imageUrl)}" alt="${escapeHtml(i.title)}" loading="lazy">`:`<div class="fallback"><span class="coin" style="width:48px;height:48px;font-size:14px">UC</span></div>`}<span class="product-stock">${i.stock<0?'Cheksiz':i.stock+' dona'}</span></div><div class="product-body"><h3>${escapeHtml(i.title)}</h3><div class="uc-value">${money(i.ucAmount)} UC</div><div class="price">${money(i.priceUZS)} so‘m</div><button class="btn block small" data-buy="${i._id}" ${i.stock===0?'disabled':''}>${icon('shopping')} Xarid qilish</button></div></article>`}
+  function purchaseCard(p){return `<div class="history-item"><div class="history-icon"><span class="coin">UC</span></div><div class="history-main"><b>${escapeHtml(p.itemTitle)} — ${money(p.ucAmount)} UC</b><small>${money(p.priceUZS)} so‘m · PUBG ID: ${escapeHtml(p.pubgId)}</small><small>${dateTime(p.createdAt)}</small></div><span class="status ${p.status}">${statusText(p.status)}</span></div>`}
+  async function loadShopData(){try{const [s,p]=await Promise.all([api('/api/shop'),api('/api/purchases/my')]);state.shop=s.items;state.purchases=p.purchases;$('#shopList').innerHTML=s.items.length?s.items.map(productCard).join(''):`<div class="empty" style="grid-column:1/-1">UC Shop mahsulotlari hali qo‘shilmagan.</div>`;$('#purchaseList').innerHTML=p.purchases.length?p.purchases.map(purchaseCard).join(''):`<div class="empty">Buyurtmalar yo‘q.</div>`;$$('[data-buy]').forEach(b=>b.onclick=()=>{state.buyItem=state.shop.find(x=>x._id===b.dataset.buy);$('#buyForm [name=itemId]').value=state.buyItem._id;$('#buySummary').innerHTML=`<b>${escapeHtml(state.buyItem.title)}</b><br>${money(state.buyItem.ucAmount)} UC · ${money(state.buyItem.priceUZS)} so‘m`;openModal('buy')})}catch(e){notify(e.message,'error')}}
+  $('#buyForm').onsubmit=async e=>{e.preventDefault();const btn=e.submitter;btn.disabled=true;const fd=Object.fromEntries(new FormData(e.target));try{const d=await api('/api/purchases',{method:'POST',body:JSON.stringify(fd)});closeModal('buy');e.target.reset();await loadShopData();state.paymentLink=d.adminChatLink||'';$('#paymentTitle').textContent=`${d.purchase.itemTitle} — ${money(d.purchase.ucAmount)} UC`;$('#paymentText').textContent=`${money(d.purchase.priceUZS)} so‘m. To‘lov uchun @Qoryogdiyev ga yozing. Bot chatga ham inline tugma yubordi.`;$('#paymentAdminBtn').textContent=d.paymentButtonText||'To‘lov uchun @Qoryogdiyev';$('#paymentAdminBtn').disabled=!state.paymentLink;openModal('payment');notify(d.message,'ok');haptic('medium')}catch(err){notify(err.message,'error')}finally{btn.disabled=false}};
+  $('#paymentAdminBtn').onclick=()=>openTelegram(state.paymentLink);
+
+  $('#withdrawForm').onsubmit=async e=>{e.preventDefault();const btn=e.submitter;btn.disabled=true;const fd=Object.fromEntries(new FormData(e.target));try{const d=await api('/api/withdrawals',{method:'POST',body:JSON.stringify(fd)});state.user=d.user;renderUser();closeModal('withdraw');e.target.reset();notify(d.message,'ok');haptic('medium');setPage('profile');loadWithdrawals()}catch(err){notify(err.message,'error')}finally{btn.disabled=false}};
+  function withdrawalCard(w){return `<div class="history-item"><div class="history-icon">${icon('wallet')}</div><div class="history-main"><b>${uc(w.amount)} UC · PUBG ID ${escapeHtml(w.pubgId)}</b><small>${escapeHtml(w.pubgNickname||'Nickname kiritilmagan')}</small><small>${dateTime(w.createdAt)}${w.adminNote?' · '+escapeHtml(w.adminNote):''}</small></div><span class="status ${w.status}">${statusText(w.status)}</span></div>`}
+  async function loadWithdrawals(){try{const d=await api('/api/withdrawals/my');$('#historyTitle').textContent='Yechib olish tarixi';$('#historyList').innerHTML=d.withdrawals.length?d.withdrawals.map(withdrawalCard).join(''):`<div class="empty">Yechib olish so‘rovlari yo‘q.</div>`}catch(e){notify(e.message,'error')}}
+  async function loadLedger(){try{const d=await api('/api/ledger');$('#historyTitle').textContent='Balans tarixi';$('#historyList').innerHTML=d.ledger.length?d.ledger.map(x=>`<div class="history-item"><div class="history-icon">${icon(x.amount>=0?'plus':'wallet')}</div><div class="history-main"><b>${escapeHtml(x.description)}</b><small>${dateTime(x.createdAt)}</small></div><span class="amount ${x.amount>=0?'plus':'minus'}">${x.amount>=0?'+':''}${uc(x.amount)} UC</span></div>`).join(''):`<div class="empty">Operatsiyalar hali yo‘q.</div>`}catch(e){notify(e.message,'error')}}
+  $('#showWithdrawals').onclick=loadWithdrawals;$('#showLedger').onclick=loadLedger;$('#adminLink').onclick=()=>location.href='/admin';
+
+  $('#copyRef').onclick=async()=>{try{await navigator.clipboard.writeText(state.refLink);notify('Referral havola nusxalandi.','ok');haptic()}catch{notify('Nusxalash imkoni bo‘lmadi.','error')}};
+  $('#shareRef').onclick=()=>{if(!state.refLink)return notify('Referral havola sozlanmagan.','error');const text=`PUBG UC bonuslarini birga yig‘amiz! Sizga ${state.config.referredBonus} UC start bonusi beriladi.`;const url=`https://t.me/share/url?url=${encodeURIComponent(state.refLink)}&text=${encodeURIComponent(text)}`;tg?.openTelegramLink?tg.openTelegramLink(url):window.open(url,'_blank');haptic('medium')};
+
+  async function boot(){try{state.config=await fetch('/api/config').then(r=>r.json());$('#appName').textContent=state.config.appName;applyLogo();$('#dailyAmount').textContent=uc(state.config.dailyBonus);$('#referrerAmount').textContent=`${uc(state.config.referrerBonus)} UC`;$('#referredAmount').textContent=`${uc(state.config.referredBonus)} UC`;$('#profileMin').textContent=uc(state.config.minWithdraw);$('#withdrawMin').textContent=`${uc(state.config.minWithdraw)} UC`;$('#withdrawForm [name=amount]').min=state.config.minWithdraw;$('#withdrawForm [name=amount]').placeholder=state.config.minWithdraw;const d=await api('/api/auth',{method:'POST',body:'{}'});state.user=d.user;state.refLink=d.referralLink;renderUser();const passed=await verifyMandatory(false);if(passed)await initializeApp()}catch(e){if(e.code==='SUBSCRIPTION_REQUIRED')return;$('#loading').innerHTML=`<div class="loader-card" style="padding:20px"><div style="color:#ff8e8b;font-weight:900">Mini App ochilmadi</div><div style="max-width:330px">${escapeHtml(e.message)}</div>${location.hostname==='localhost'?'<button class="btn" onclick="location.reload()">Qayta urinish</button>':''}</div>`}}
+  boot();
+</script>
+</body>
+</html>
